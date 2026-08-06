@@ -1,0 +1,30 @@
+services:
+  telegram-assistant:
+    build: .
+    container_name: telegram-assistant
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - TZ=Europe/Belgrade
+      - REDIS_ADDR=redis:6379
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - LOG_LEVEL=debug
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./stickers.json:/app/stickers.json:ro
+      - ./logs:/app/logs
+      - ./session:/app/session
+
+  redis:
+    image: redis:7-alpine
+    container_name: telegram-assistant-redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
